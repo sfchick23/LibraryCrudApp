@@ -2,6 +2,7 @@ package ru.sfchick.libraryapp.Services;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
@@ -39,8 +40,20 @@ public class BookService {
         return bookRepository.findById(id).orElse(null);
     }
 
+    public List<Book> findAll(Pageable pageable) {
+        return bookRepository.findAll(pageable).getContent();
+    }
+
+    public List<Book> findAllSortedByYear(Pageable pageable) {
+        return bookRepository.findAllByOrderByYearAsc(pageable).getContent();
+    }
+
     public Optional<Person> findOwnerByBookId(int id) {
         return bookRepository.findOwnerByBookId(id);
+    }
+
+    public List<Book> searchByTitle(String title) {
+        return bookRepository.findByTitleStartingWith(title);
     }
 
     @Transactional

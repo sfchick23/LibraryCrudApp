@@ -2,6 +2,8 @@ package ru.sfchick.libraryapp.Contoller;
 
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -30,17 +32,51 @@ public class BookController {
 
 
     @GetMapping()
-    public String books(@RequestParam(required = false, defaultValue = "false") String sort_by_year, Model model) throws SQLException {
+    public String books(@RequestParam(required = false, defaultValue = "false") String sort_by_year,
+                        @RequestParam(required = false, defaultValue = "0") int page,
+                        @RequestParam(required = false, defaultValue = "100") int books_per_page,
+                        Model model) throws SQLException {
         List<Book> books;
 
+        //sorted by year
         if ("true".equals(sort_by_year)) {
             books = bookService.findAllSortedByYear();
         } else {
             books = bookService.findAll();
         }
+        //pageable
+        Pageable pageable = PageRequest.of(page, books_per_page);
+
+        if ("true".equals(sort_by_year)) {
+            books = bookService.findAllSortedByYear(pageable);
+        } else {
+            books = bookService.findAll(pageable);
+        }
 
         model.addAttribute("books", books);
         return "books/index";
+    }
+
+    @GetMapping("/search")
+    public String search(@RequestParam(required = false) String query, Model model) {
+        if (query == null || query.trim().isEmpty()) {
+            model.addAttribute("message", "Пожалуйста, введите название книги.");
+            return "books/search";
+        }
+
+        List<Book> books = bookService.searchByTitle(query);
+
+        if (books.isEmpty()) {
+            model.addAttribute("message", "Книг не найдено");
+        } else {
+            for (Book book : books) {
+                Optional<Person> owner = bookService.findOwnerByBookId(book.getId());
+                owner.ifPresent(book::setOwner);
+            }
+            model.addAttribute("books", books);
+        }
+
+        return "books/search";
     }
 
 

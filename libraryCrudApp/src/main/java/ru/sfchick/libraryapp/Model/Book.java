@@ -23,6 +23,7 @@ public class Book {
     @Column(name = "year")
     private int year;
 
+
     @ManyToOne
     @JoinColumn(name = "person_id", referencedColumnName = "id")
     private Person owner;
@@ -37,6 +38,14 @@ public class Book {
         this.year = year;
     }
 
+
+    public Person getOwner() {
+        return owner;
+    }
+
+    public void setOwner(Person owner) {
+        this.owner = owner;
+    }
 
     public int getId() {
 

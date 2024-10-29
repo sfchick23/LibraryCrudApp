@@ -13,16 +13,16 @@
     <hr/>
 </div>
 
-<div th:if="!${books.isEmpty}">
+<div th:if="${!books.isEmpty()}">
     <hr/>
     <b>Книги:</b>
     <br/>
     <table th:each="book : ${books}">
         <tr th:text="${book.getTitle() + ', ' + book.getAuthor() + ', ' + book.getYear()}">book</tr>
     </table>
+    <br/>
+    <hr/>
 </div>
-
-<hr/>
 
 <a href="/libraryCrudApp_war_exploded/people">BACK</a>
 <br/>

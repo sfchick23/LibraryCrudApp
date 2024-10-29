@@ -1,12 +1,16 @@
 package ru.sfchick.libraryapp.Services;
 
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 import ru.sfchick.libraryapp.Model.Book;
 import ru.sfchick.libraryapp.Model.Person;
 import ru.sfchick.libraryapp.Repositories.BookRepository;
+import ru.sfchick.libraryapp.Repositories.PeopleRepository;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,21 +19,28 @@ import java.util.Optional;
 public class BookService {
 
     private final BookRepository bookRepository;
+    private final PeopleRepository peopleRepository;
 
-    public BookService(BookRepository bookRepository) {
+    @Autowired
+    public BookService(BookRepository bookRepository, PeopleRepository peopleRepository) {
         this.bookRepository = bookRepository;
+        this.peopleRepository = peopleRepository;
     }
 
     public List<Book> findAll() {
         return bookRepository.findAll();
     }
 
+    public List<Book> findAllSortedByYear() {
+        return bookRepository.findAll(Sort.by("year"));
+    }
+
     public Book findById(int id) {
         return bookRepository.findById(id).orElse(null);
     }
 
-    public Optional<Person> findByOwner(int id) {
-        return bookRepository.findByOwner(id);
+    public Optional<Person> findOwnerByBookId(int id) {
+        return bookRepository.findOwnerByBookId(id);
     }
 
     @Transactional
@@ -46,5 +57,43 @@ public class BookService {
     @Transactional
     public void delete(int id) {
         bookRepository.deleteById(id);
+    }
+
+    @Transactional
+    public void release(int id) {
+        Book book = bookRepository.findById(id).orElseThrow(() -> new RuntimeException("Book not found"));
+        Person person = book.getOwner();
+        if (person != null) {
+            person.setDateTakeBook(null); // Обнуляем дату при возврате
+        }
+        book.setOwner(null);
+
+        bookRepository.save(book);
+    }
+
+    @Transactional
+    public void assign(int id, Person selectedPerson) {
+        Book book = bookRepository.findById(id).orElseThrow(() -> new RuntimeException("Book not found"));
+        book.setOwner(selectedPerson);
+
+        Person person = peopleRepository.findById(selectedPerson.getId())
+                .orElseThrow(() -> new RuntimeException("Person not found"));
+
+        person.setDateTakeBook(new Date());
+
+        bookRepository.save(book);
+    }
+
+
+
+
+    public boolean isBookOverdue(Book book) {
+        Person owner = book.getOwner();
+        if (owner == null || owner.getDateTakeBook() == null) {
+            return false;
+        }
+        long differenceInMillis = new Date().getTime() - owner.getDateTakeBook().getTime();
+        long daysDifference = differenceInMillis / (1000 * 60 * 60 * 24);
+        return daysDifference > 10;
     }
 }

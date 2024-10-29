@@ -1,10 +1,14 @@
 package ru.sfchick.libraryapp.Services;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.sfchick.libraryapp.Model.Book;
 import ru.sfchick.libraryapp.Model.Person;
+import ru.sfchick.libraryapp.Repositories.BookRepository;
 import ru.sfchick.libraryapp.Repositories.PeopleRepository;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,9 +17,12 @@ import java.util.Optional;
 public class PeopleService {
 
     private final PeopleRepository peopleRepository;
+    private final BookRepository bookRepository;
 
-    public PeopleService(PeopleRepository peopleRepository) {
+    @Autowired
+    public PeopleService(PeopleRepository peopleRepository, BookRepository bookRepository) {
         this.peopleRepository = peopleRepository;
+        this.bookRepository = bookRepository;
     }
 
     public List<Person> findAll() {
@@ -26,9 +33,12 @@ public class PeopleService {
         return peopleRepository.findById(id).orElse(null);
     }
 
-    public Object findAllByBooks(int id){
-        return peopleRepository.findAllByBooks(id);
+    public List<Book> findBooksByPerson(int personId) {
+        Person person = peopleRepository.findById(personId).orElse(null);
+        return person != null ? bookRepository.findByOwner(person) : Collections.emptyList();
     }
+
+
 
     public Optional<Person> findByFullName(String fullName) {
         return peopleRepository.findByFullName(fullName);
@@ -45,6 +55,7 @@ public class PeopleService {
         peopleRepository.save(updatePerson);
     }
 
+    @Transactional
     public void delete(int id) {
         peopleRepository.deleteById(id);
     }

@@ -2,6 +2,7 @@ package ru.sfchick.libraryapp.Model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+import org.hibernate.annotations.Cascade;
 
 import java.util.Date;
 import java.util.List;
@@ -29,6 +30,7 @@ public class Person {
     private Date dateTakeBook;
 
     @OneToMany(mappedBy = "owner")
+    @Cascade(org.hibernate.annotations.CascadeType.SAVE_UPDATE)
     private List<Book> books;
 
 

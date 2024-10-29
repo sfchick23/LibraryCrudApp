@@ -12,6 +12,7 @@ import ru.sfchick.libraryapp.Services.BookService;
 import ru.sfchick.libraryapp.Services.PeopleService;
 
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Optional;
 
 @Controller
@@ -29,18 +30,26 @@ public class BookController {
 
 
     @GetMapping()
-    public String books(Model model) throws SQLException {
+    public String books(@RequestParam(required = false, defaultValue = "false") String sort_by_year, Model model) throws SQLException {
+        List<Book> books;
 
-        model.addAttribute("books", bookService.findAll());
+        if ("true".equals(sort_by_year)) {
+            books = bookService.findAllSortedByYear();
+        } else {
+            books = bookService.findAll();
+        }
+
+        model.addAttribute("books", books);
         return "books/index";
     }
+
 
     @GetMapping("/{id}")
     public String show(@PathVariable("id") int id, Model model,
                        @ModelAttribute("person") Person person) throws SQLException {
         model.addAttribute("book", bookService.findById(id));
 
-        Optional<Person> bookOwner = bookService.findByOwner(id);
+        Optional<Person> bookOwner = bookService.findOwnerByBookId(id);
 
         if (bookOwner.isPresent()) {
             model.addAttribute("owner", bookOwner.get());
@@ -90,19 +99,19 @@ public class BookController {
     }
 
 
-//    @PatchMapping("/{id}/release")
-//    public String release(@PathVariable("id") int id) {
-//        bookService.release(id);
-//        return "redirect:/books/" + id;
-//    }
-//
-//    @PatchMapping("/{id}/assign")
-//    public String assign(@PathVariable("id") int id,
-//                         @ModelAttribute("person") Person selectedPerson) {
-//
-//        bookService.assign(id, selectedPerson);
-//        return "redirect:/books/" + id;
-//    }
+    @PatchMapping("/{id}/release")
+    public String release(@PathVariable("id") int id) {
+        bookService.release(id);
+        return "redirect:/books/" + id;
+    }
+
+    @PatchMapping("/{id}/assign")
+    public String assign(@PathVariable("id") int id,
+                         @ModelAttribute("person") Person selectedPerson) {
+
+        bookService.assign(id, selectedPerson);
+        return "redirect:/books/" + id;
+    }
 
     @DeleteMapping("/{id}")
     public String delete(@PathVariable("id") int id) {
